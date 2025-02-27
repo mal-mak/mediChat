@@ -172,3 +172,8 @@ cython_debug/
 
 # No need to push the data
 *.csv
+
+downloaded_files/
+
+cloud-sql-proxy
+
