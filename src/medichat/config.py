@@ -1,4 +1,3 @@
-
 PROJECT_ID = "medichat-451909"
 REGION = "europe-west1"
 INSTANCE = "myinstance"
