@@ -1,0 +1,454 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.medichat.eval &mdash; mediChat  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            mediChat
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../app.html">Streamlit APP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../eval.html">Evaluation Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ingest.html">Ingest Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../retrieve.html">Retrieve Module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">mediChat</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.medichat.eval</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.medichat.eval</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics.pairwise</span><span class="w"> </span><span class="kn">import</span> <span class="n">cosine_similarity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sentence_transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SentenceTransformer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">Console</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>
+
+<span class="c1"># Constants</span>
+<span class="n">HOST</span> <span class="o">=</span> <span class="s2">&quot;http://0.0.0.0:8181&quot;</span>
+<span class="n">DOWNLOADED_LOCAL_DIRECTORY</span> <span class="o">=</span> <span class="s2">&quot;./downloaded_files&quot;</span>
+<span class="n">CSV_FILE_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DOWNLOADED_LOCAL_DIRECTORY</span><span class="p">,</span> <span class="s2">&quot;medquad.csv&quot;</span><span class="p">)</span>
+<span class="n">EVAL_DIR</span> <span class="o">=</span> <span class="s2">&quot;/Users/malmak/Dauphine/M2/Generative AI/mediChat/eval&quot;</span>
+<span class="n">RESULTS_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">EVAL_DIR</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">)</span>
+<span class="n">NUM_TEST_SAMPLES</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">SAMPLE_SEED</span> <span class="o">=</span> <span class="mi">42</span>
+
+<span class="c1"># Initialize sentence transformer for semantic similarity</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">SentenceTransformer</span><span class="p">(</span><span class="s2">&quot;all-MiniLM-L6-v2&quot;</span><span class="p">)</span>
+<span class="n">console</span> <span class="o">=</span> <span class="n">Console</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="load_test_data">
+<a class="viewcode-back" href="../../../eval.html#src.medichat.eval.load_test_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_test_data</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load and prepare test data from the MedQuAD dataset.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: A random sample of the dataset containing NUM_TEST_SAMPLES rows.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FileNotFoundError: If the CSV file is not found at CSV_FILE_PATH.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">CSV_FILE_PATH</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset not found at </span><span class="si">{</span><span class="n">CSV_FILE_PATH</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">CSV_FILE_PATH</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">NUM_TEST_SAMPLES</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">SAMPLE_SEED</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_chatbot_response">
+<a class="viewcode-back" href="../../../eval.html#src.medichat.eval.get_chatbot_response">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_chatbot_response</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get response from the chatbot API and measure response time.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        question (str): The question to ask the chatbot.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[Dict, float]: A tuple containing:</span>
+<span class="sd">            - Dict: The response containing &#39;sources&#39; and &#39;message&#39;</span>
+<span class="sd">            - float: The response time in seconds</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        Exception: If the API call fails or returns non-200 status code.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Get sources</span>
+        <span class="n">sources_response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">HOST</span><span class="si">}</span><span class="s2">/get_sources&quot;</span><span class="p">,</span>
+            <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">question</span><span class="p">,</span>
+                <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
+                <span class="s2">&quot;similarity_threshold&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>
+                <span class="s2">&quot;max_sources&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;English&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;documents&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">&quot;previous_context&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="p">},</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sources_response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sources API Error: </span><span class="si">{</span><span class="n">sources_response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">sources</span> <span class="o">=</span> <span class="n">sources_response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+        <span class="c1"># Get answer</span>
+        <span class="n">answer_response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">HOST</span><span class="si">}</span><span class="s2">/answer&quot;</span><span class="p">,</span>
+            <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">question</span><span class="p">,</span>
+                <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
+                <span class="s2">&quot;similarity_threshold&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>
+                <span class="s2">&quot;max_sources&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;English&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;documents&quot;</span><span class="p">:</span> <span class="n">sources</span><span class="p">,</span>
+                <span class="s2">&quot;previous_context&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="p">},</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">answer_response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Answer API Error: </span><span class="si">{</span><span class="n">answer_response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">response_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;sources&quot;</span><span class="p">:</span> <span class="n">sources</span><span class="p">,</span>
+            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="n">answer_response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;message&quot;</span><span class="p">],</span>
+        <span class="p">},</span> <span class="n">response_time</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in API call: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;sources&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span> <span class="mf">0.0</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_answer_similarity">
+<a class="viewcode-back" href="../../../eval.html#src.medichat.eval.calculate_answer_similarity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_answer_similarity</span><span class="p">(</span><span class="n">answer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source_answers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate semantic similarity between chatbot answer and source answers.</span>
+
+<span class="sd">    Uses sentence transformers to embed texts and cosine similarity for comparison.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        answer (str): The chatbot&#39;s generated answer.</span>
+<span class="sd">        source_answers (List[str]): List of reference answers from sources.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: The highest similarity score (0-1) between the answer and any source answer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">answer</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">source_answers</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+
+    <span class="c1"># Embed chatbot answer and source answers</span>
+    <span class="n">answer_embedding</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">encode</span><span class="p">([</span><span class="n">answer</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">source_embeddings</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">source_answers</span><span class="p">)</span>
+
+    <span class="c1"># Calculate similarities with each source answer</span>
+    <span class="n">similarities</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">([</span><span class="n">answer_embedding</span><span class="p">],</span> <span class="n">source_embeddings</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Return the highest similarity score</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">similarities</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="save_detailed_comparison">
+<a class="viewcode-back" href="../../../eval.html#src.medichat.eval.save_detailed_comparison">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_detailed_comparison</span><span class="p">(</span>
+    <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">chatbot_answer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">source_answers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">similarity_score</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save detailed comparison between chatbot answer and source answers to a file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        output_file (str): Path to the output file.</span>
+<span class="sd">        question (str): Original question asked.</span>
+<span class="sd">        chatbot_answer (str): Answer generated by the chatbot.</span>
+<span class="sd">        source_answers (List[str]): Reference answers from sources.</span>
+<span class="sd">        similarity_score (float): Calculated similarity score.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Question: </span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Chatbot Answer: </span><span class="si">{</span><span class="n">chatbot_answer</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Source Answers:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">src_answer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source_answers</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Source </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">src_answer</span><span class="p">[:</span><span class="mi">500</span><span class="p">]</span><span class="si">}</span><span class="s2">...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Similarity Score: </span><span class="si">{</span><span class="n">similarity_score</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="run_evaluation">
+<a class="viewcode-back" href="../../../eval.html#src.medichat.eval.run_evaluation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_evaluation</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run the complete evaluation process for the chatbot.</span>
+
+<span class="sd">    This function:</span>
+<span class="sd">    1. Creates necessary directories</span>
+<span class="sd">    2. Loads test data</span>
+<span class="sd">    3. Tests the chatbot on each question</span>
+<span class="sd">    4. Saves detailed comparisons</span>
+<span class="sd">    5. Calculates similarity scores</span>
+<span class="sd">    6. Measures response times</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: Results containing questions, answers, similarity scores, and response times.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Create directories if they don&#39;t exist</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">RESULTS_DIR</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">test_data</span> <span class="o">=</span> <span class="n">load_test_data</span><span class="p">()</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Update file path to use results directory</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">_%H%M%S&quot;</span><span class="p">)</span>
+    <span class="n">detailed_output</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">RESULTS_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;detailed_evaluation_</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">.txt&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">test_data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">console</span><span class="o">.</span><span class="n">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[bold cyan]Testing sample </span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span><span class="si">}</span><span class="s2">[/bold cyan]&quot;</span>
+        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span><span class="p">,</span> <span class="n">response_time</span> <span class="o">=</span> <span class="n">get_chatbot_response</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">])</span>
+            <span class="n">sources</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;sources&quot;</span><span class="p">]</span>
+            <span class="n">chatbot_answer</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">]</span>
+
+            <span class="n">source_answers</span> <span class="o">=</span> <span class="p">[</span><span class="n">source</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="s2">&quot;answer&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">]</span>
+            <span class="n">answer_similarity</span> <span class="o">=</span> <span class="n">calculate_answer_similarity</span><span class="p">(</span>
+                <span class="n">chatbot_answer</span><span class="p">,</span> <span class="n">source_answers</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Save detailed comparison to file</span>
+            <span class="n">save_detailed_comparison</span><span class="p">(</span>
+                <span class="n">detailed_output</span><span class="p">,</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">],</span>
+                <span class="n">chatbot_answer</span><span class="p">,</span>
+                <span class="n">source_answers</span><span class="p">,</span>
+                <span class="n">answer_similarity</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;chatbot_answer&quot;</span><span class="p">:</span> <span class="n">chatbot_answer</span><span class="p">,</span>
+                    <span class="s2">&quot;source_answers&quot;</span><span class="p">:</span> <span class="n">source_answers</span><span class="p">,</span>
+                    <span class="s2">&quot;answer_similarity&quot;</span><span class="p">:</span> <span class="n">answer_similarity</span><span class="p">,</span>
+                    <span class="s2">&quot;response_time&quot;</span><span class="p">:</span> <span class="n">response_time</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">console</span><span class="o">.</span><span class="n">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[bold red]Error processing sample </span><span class="si">{</span><span class="n">idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">[/bold red]&quot;</span>
+            <span class="p">)</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;chatbot_answer&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;source_answers&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                    <span class="s2">&quot;answer_similarity&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="s2">&quot;response_time&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+    <span class="n">console</span><span class="o">.</span><span class="n">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[bold blue]Detailed comparisons saved to: </span><span class="si">{</span><span class="n">detailed_output</span><span class="si">}</span><span class="s2">[/bold blue]&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="display_results">
+<a class="viewcode-back" href="../../../eval.html#src.medichat.eval.display_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">display_results</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Display evaluation results in a formatted table using Rich.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        results (pd.DataFrame): DataFrame containing evaluation results with columns:</span>
+<span class="sd">            - answer_similarity</span>
+<span class="sd">            - response_time</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Chatbot Evaluation Results&quot;</span><span class="p">)</span>
+
+    <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;answer_similarity&quot;</span><span class="p">,</span> <span class="s2">&quot;response_time&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">add_column</span><span class="p">(</span><span class="n">metric</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">(),</span> <span class="n">justify</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Add mean scores row</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">metrics</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">table</span><span class="o">.</span><span class="n">add_row</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">means</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">],</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;bright_green&quot;</span><span class="p">)</span>
+
+    <span class="n">console</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../eval.html#src.medichat.eval.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main execution function for the evaluation system.</span>
+
+<span class="sd">    This function:</span>
+<span class="sd">    1. Runs the evaluation</span>
+<span class="sd">    2. Displays results in the terminal</span>
+<span class="sd">    3. Saves detailed results to JSON and text files</span>
+
+<span class="sd">    The results are saved in two formats:</span>
+<span class="sd">    - A JSON file containing structured results and metadata</span>
+<span class="sd">    - A text file with detailed comparisons</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">console</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="s2">&quot;[bold green]Starting chatbot evaluation...[/bold green]&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Run evaluation</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">run_evaluation</span><span class="p">()</span>
+
+    <span class="c1"># Display results</span>
+    <span class="n">display_results</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="c1"># Save detailed results in JSON format with updated path</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">_%H%M%S&quot;</span><span class="p">)</span>
+    <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">RESULTS_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;evaluation_results_</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Convert DataFrame to dictionary format</span>
+    <span class="n">results_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
+            <span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="n">NUM_TEST_SAMPLES</span><span class="p">,</span>
+            <span class="s2">&quot;mean_scores&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;answer_similarity&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;answer_similarity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+                <span class="s2">&quot;response_time&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;response_time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;evaluations&quot;</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Add individual evaluations</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;question&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;chatbot_answer&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;chatbot_answer&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;source_answers&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;source_answers&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;answer_similarity&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;answer_similarity&quot;</span><span class="p">]),</span>
+                <span class="s2">&quot;response_time&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;response_time&quot;</span><span class="p">]),</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+        <span class="n">results_dict</span><span class="p">[</span><span class="s2">&quot;evaluations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">evaluation</span><span class="p">)</span>
+
+    <span class="c1"># Save to JSON file with pretty printing</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">results_dict</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">console</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[bold green]Detailed results saved to </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">[/bold green]&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Malek Makhlouf.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
