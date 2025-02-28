@@ -2,6 +2,12 @@
 
 A medical chatbot using Retrieval-Augmented Generation (RAG) to provide accurate, source-based medical information that answers the user's questions.
 
+![model card](model_card.png)
+
+## 📚 Documentation
+
+Click the following link to access this project [Documentation](https://mal-mak.github.io/mediChat/) - Realised with Sphinx
+
 ## 🌟 Features
 
 - **RAG Architecture**: Combines retrieval-based and generative approaches for accurate answers
