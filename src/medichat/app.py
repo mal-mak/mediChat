@@ -36,7 +36,14 @@ with st.sidebar:
         max_value=1.0,
         value=0.75,
         step=0.05,
-        disabled=True,
+        disabled=False,
+    )
+    max_sources = st.slider(
+        "Maximum Number of Sources to Display",
+        min_value=1,
+        max_value=20,
+        value=4,
+        step=1,
     )
     language = st.selectbox("language", ["English", "Francais"])
 
@@ -77,6 +84,7 @@ if question := st.chat_input("Message Malek's Medical Chatbot"):
             "question": question,
             "temperature": temperature,
             "similarity_threshold": similarity_threshold,
+            "max_sources": max_sources,
             "language": language,
             "documents": [],
             "previous_context": [],
@@ -95,6 +103,7 @@ if question := st.chat_input("Message Malek's Medical Chatbot"):
             "question": question,
             "temperature": temperature,
             "similarity_threshold": similarity_threshold,
+            "max_sources": max_sources,
             "language": language,
             "documents": docs,
             "previous_context": st.session_state["messages"],

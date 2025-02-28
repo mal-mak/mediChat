@@ -46,6 +46,7 @@ class UserInput(BaseModel):
     temperature: float
     language: str
     similarity_threshold: float
+    max_sources: float
     documents: List[DocumentResponse]
     previous_context: List[dict]
 
@@ -64,6 +65,7 @@ def get_sources(user_input: UserInput) -> List[DocumentResponse]:
         f"Retrieve information related to: {user_input.question}",
         vector_store,
         user_input.similarity_threshold,
+        user_input.max_sources,
     )
 
     if not relevants_docs:
@@ -110,12 +112,13 @@ def answer(user_input: UserInput):
                 INSTRUCTIONS:
                 0. You are a knowledgeable medical professional.
                 1. You answer questions using ONLY the provided DOCUMENT.
-                2. In the DOCUMENT, you can find the ANSWER to the question, the SOURCE of the ANSWER, as well as the FOCUS AREA.
-                3. Answer in {language} the QUESTION using the provided DOCUMENT text above.
-                4. Keep your answer grounded in the facts from the DOCUMENT only.
-                5. Be somewhat concise but retain all relevant information and details.
-                6. If the question refers to "it" or any other ambiguous term, refer to the LAST DISCUSSED ENTITY unless further clarification is provided in the QUESTION.
-                7. Use the PREVIOUS CONTEXT only if it provides additional clarity or information that directly supports answering the QUESTION.
+                2. If the QUESTION is in an other language, translate it first to english.
+                3. In the DOCUMENT, you can find the ANSWER to the question, the SOURCE of the ANSWER, as well as the FOCUS AREA.
+                4. Answer in {language} the QUESTION using the provided DOCUMENT text above.
+                5. Keep your answer grounded in the facts from the DOCUMENT only.
+                6. Be somewhat concise but retain all relevant information and details.
+                7. If the question refers to "it" or any other ambiguous term, refer to the LAST DISCUSSED ENTITY unless further clarification is provided in the QUESTION.
+                8. Use the PREVIOUS CONTEXT only if it provides additional clarity or information that directly supports answering the QUESTION.
 
                 QUESTION:
                 {question}
