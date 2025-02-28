@@ -177,3 +177,8 @@ downloaded_files/
 
 cloud-sql-proxy
 
+detailed*.txt
+
+evaluation*.json
+
+eval/
