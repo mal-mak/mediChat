@@ -47,7 +47,7 @@ with st.sidebar:
     )
     language = st.selectbox("language", ["English", "Francais"])
 
-    st.subheader(f"Ingested Files")
+    st.subheader("Ingested Files")
     for file in st.session_state.files[1:]:
         st.write(file[5:])
 

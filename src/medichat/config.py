@@ -1,4 +1,3 @@
-import os
 
 PROJECT_ID = "medichat-451909"
 REGION = "europe-west1"

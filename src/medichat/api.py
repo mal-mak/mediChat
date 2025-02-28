@@ -7,14 +7,14 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from google.cloud import storage
 from dotenv import load_dotenv
-from ingest import (
+from medichat.ingest import (
     create_cloud_sql_database_connection,
     get_embeddings,
     get_vector_store,
     list_files_in_bucket,
 )
-from retrieve import get_relevant_documents, format_relevant_documents
-from config import TABLE_NAME, BUCKET_NAME
+from medichat.retrieve import get_relevant_documents, format_relevant_documents
+from medichat.config import TABLE_NAME, BUCKET_NAME
 
 load_dotenv()
 
@@ -53,6 +53,12 @@ class UserInput(BaseModel):
 
 @app.post("/get_files_names")
 def get_files_names():
+    """
+    Retrieve the list of available files in the configured Google Cloud Storage bucket.
+
+    Returns:
+        dict: A dictionary containing the list of file names under the 'files' key.
+    """
     bucket = client.get_bucket(BUCKET_NAME)
     files = list_files_in_bucket(client, bucket)
     return {"files": files}
@@ -60,6 +66,16 @@ def get_files_names():
 
 @app.post("/get_sources", response_model=List[DocumentResponse])
 def get_sources(user_input: UserInput) -> List[DocumentResponse]:
+    """
+    Retrieve relevant source documents based on the user's question.
+
+    Args:
+        user_input (UserInput): User input containing the question and retrieval parameters.
+
+    Returns:
+        List[DocumentResponse]: A list of relevant documents with their content and metadata.
+        Returns empty list if no relevant documents are found.
+    """
     vector_store = get_vector_store(ENGINE, TABLE_NAME, EMBEDDING)
     relevants_docs = get_relevant_documents(
         f"Retrieve information related to: {user_input.question}",
@@ -81,13 +97,27 @@ def get_sources(user_input: UserInput) -> List[DocumentResponse]:
 @app.post("/answer")
 def answer(user_input: UserInput):
     """
-    Generates an answer to the user's input based on the ingested documents.
-    Args:
-        user_input (UserInput): The user's input containing the question, temperature, language, and retrieved documents.
-    Returns:
-        str: An answer to the user's question.
-    """
+    Generate an answer to a medical question using RAG methodology.
 
+    This function:
+    1. Uses the provided source documents as context
+    2. Considers previous conversation context
+    3. Generates a response using Google's Generative AI
+    4. Handles multi-language support
+
+    Args:
+        user_input (UserInput): Object containing:
+            - question: The medical query
+            - temperature: Controls response randomness
+            - language: Desired response language
+            - documents: Retrieved context documents
+            - previous_context: Previous conversation history
+            - similarity_threshold: Minimum similarity score for document retrieval
+            - max_sources: Maximum number of sources to consider
+
+    Returns:
+        dict: Contains the generated answer under the 'message' key
+    """
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-pro",
         temperature=user_input.temperature,

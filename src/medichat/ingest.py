@@ -9,7 +9,7 @@ from google.cloud.exceptions import NotFound
 from google.cloud.exceptions import GoogleCloudError
 
 # Non sensitive information goes in config
-from config import PROJECT_ID, REGION, INSTANCE, DATABASE, DB_USER
+from medichat.config import PROJECT_ID, REGION, INSTANCE, DATABASE, DB_USER
 
 load_dotenv()
 # Sensitive information goes in .env
