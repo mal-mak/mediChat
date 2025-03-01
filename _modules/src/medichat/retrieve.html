@@ -1,0 +1,179 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.medichat.retrieve &mdash; mediChat  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            mediChat
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../app.html">Streamlit APP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../eval.html">Evaluation Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ingest.html">Ingest Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../retrieve.html">Retrieve Module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">mediChat</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.medichat.retrieve</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.medichat.retrieve</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_google_cloud_sql_pg</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostgresVectorStore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.documents.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
+
+
+<div class="viewcode-block" id="get_relevant_documents">
+<a class="viewcode-back" href="../../../retrieve.html#src.medichat.retrieve.get_relevant_documents">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_relevant_documents</span><span class="p">(</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">vector_store</span><span class="p">:</span> <span class="n">PostgresVectorStore</span><span class="p">,</span>
+    <span class="n">similarity_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">max_sources</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve relevant documents based on a query using a vector store.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        query (str): The search query string.</span>
+<span class="sd">        vector_store (PostgresVectorStore): An instance of PostgresVectorStore used to retrieve documents.</span>
+<span class="sd">        similarity_threshold (float): The similarity threshold to use for the search.</span>
+<span class="sd">        max_sources (int): The maximum number of sources to return.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[Document]: A list of documents relevant to the query.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">relevant_docs_scores</span> <span class="o">=</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">similarity_search_with_relevance_scores</span><span class="p">(</span>
+        <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">max_sources</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">relevant_docs_scores</span><span class="p">:</span>
+        <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">score</span>
+    <span class="n">relevant_docs</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">relevant_docs_scores</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">relevant_docs</span></div>
+
+
+
+<div class="viewcode-block" id="format_relevant_documents">
+<a class="viewcode-back" href="../../../retrieve.html#src.medichat.retrieve.format_relevant_documents">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_relevant_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Document</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format relevant documents into a str.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        documents (list[Document]): A list of relevant documents.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[dict]: A list of dictionaries containing the relevant documents.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; documents = [</span>
+<span class="sd">            Document(page_content: &quot;question1&quot;, metadata: {&quot;source&quot;: &quot;source1&quot;, &quot;answer&quot;: &quot;answer1&quot;, &quot;focus_area&quot;: &quot;focus_area1&quot;}),</span>
+<span class="sd">            Document(page_content: &quot;question2&quot;, metadata: {&quot;source&quot;: &quot;source2&quot;, &quot;answer&quot;: &quot;answer2&quot;, &quot;focus_area&quot;: &quot;focus_area2&quot;})</span>
+<span class="sd">        ]</span>
+<span class="sd">        &gt;&gt;&gt; doc_str: str = format_relevant_documents(documents)</span>
+<span class="sd">        &gt;&gt;&gt; &#39;&#39;&#39;</span>
+<span class="sd">            SOURCE: source1</span>
+<span class="sd">            QUESTION:</span>
+<span class="sd">            question1</span>
+<span class="sd">            ANSWER:</span>
+<span class="sd">            answer1</span>
+<span class="sd">            FOCUS AREA:</span>
+<span class="sd">            focus_area1</span>
+<span class="sd">            -----</span>
+<span class="sd">            SOURCE: source2</span>
+<span class="sd">            ...</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;SOURCE:</span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;source&quot;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">QUESTION:</span><span class="se">\n</span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="si">}</span><span class="se">\n</span><span class="s2">ANSWER:</span><span class="se">\n</span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">FOCUS AREA:</span><span class="se">\n</span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;focus_area&quot;</span><span class="p">]</span><span class="si">}</span><span class="se">\n</span><span class="s2">-----&quot;</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+        <span class="p">]</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Malek Makhlouf.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

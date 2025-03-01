@@ -1,0 +1,251 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evaluation Module &mdash; mediChat  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Ingest Module" href="ingest.html" />
+    <link rel="prev" title="Streamlit APP" href="app.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            mediChat
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="app.html">Streamlit APP</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Evaluation Module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#src.medichat.eval.calculate_answer_similarity"><code class="docutils literal notranslate"><span class="pre">calculate_answer_similarity()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src.medichat.eval.display_results"><code class="docutils literal notranslate"><span class="pre">display_results()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src.medichat.eval.get_chatbot_response"><code class="docutils literal notranslate"><span class="pre">get_chatbot_response()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src.medichat.eval.load_test_data"><code class="docutils literal notranslate"><span class="pre">load_test_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src.medichat.eval.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src.medichat.eval.run_evaluation"><code class="docutils literal notranslate"><span class="pre">run_evaluation()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#src.medichat.eval.save_detailed_comparison"><code class="docutils literal notranslate"><span class="pre">save_detailed_comparison()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ingest.html">Ingest Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="retrieve.html">Retrieve Module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">mediChat</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Evaluation Module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/eval.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.medichat.eval">
+<span id="evaluation-module"></span><h1>Evaluation Module<a class="headerlink" href="#module-src.medichat.eval" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.medichat.eval.calculate_answer_similarity">
+<span class="sig-prename descclassname"><span class="pre">src.medichat.eval.</span></span><span class="sig-name descname"><span class="pre">calculate_answer_similarity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">answer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_answers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="_modules/src/medichat/eval.html#calculate_answer_similarity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.medichat.eval.calculate_answer_similarity" title="Link to this definition"></a></dt>
+<dd><p>Calculate semantic similarity between chatbot answer and source answers.</p>
+<p>Uses sentence transformers to embed texts and cosine similarity for comparison.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>answer</strong> (<em>str</em>) – The chatbot’s generated answer.</p></li>
+<li><p><strong>source_answers</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of reference answers from sources.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The highest similarity score (0-1) between the answer and any source answer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.medichat.eval.display_results">
+<span class="sig-prename descclassname"><span class="pre">src.medichat.eval.</span></span><span class="sig-name descname"><span class="pre">display_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/src/medichat/eval.html#display_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.medichat.eval.display_results" title="Link to this definition"></a></dt>
+<dd><p>Display evaluation results in a formatted table using Rich.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>results</strong> (<em>pd.DataFrame</em>) – DataFrame containing evaluation results with columns:
+- answer_similarity
+- response_time</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.medichat.eval.get_chatbot_response">
+<span class="sig-prename descclassname"><span class="pre">src.medichat.eval.</span></span><span class="sig-name descname"><span class="pre">get_chatbot_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">question</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/src/medichat/eval.html#get_chatbot_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.medichat.eval.get_chatbot_response" title="Link to this definition"></a></dt>
+<dd><p>Get response from the chatbot API and measure response time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>question</strong> (<em>str</em>) – The question to ask the chatbot.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A tuple containing:</dt><dd><ul class="simple">
+<li><p>Dict: The response containing ‘sources’ and ‘message’</p></li>
+<li><p>float: The response time in seconds</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Dict, float]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – If the API call fails or returns non-200 status code.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.medichat.eval.load_test_data">
+<span class="sig-prename descclassname"><span class="pre">src.medichat.eval.</span></span><span class="sig-name descname"><span class="pre">load_test_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/src/medichat/eval.html#load_test_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.medichat.eval.load_test_data" title="Link to this definition"></a></dt>
+<dd><p>Load and prepare test data from the MedQuAD dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A random sample of the dataset containing NUM_TEST_SAMPLES rows.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pd.DataFrame</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>FileNotFoundError</strong> – If the CSV file is not found at CSV_FILE_PATH.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.medichat.eval.main">
+<span class="sig-prename descclassname"><span class="pre">src.medichat.eval.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/medichat/eval.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.medichat.eval.main" title="Link to this definition"></a></dt>
+<dd><p>Main execution function for the evaluation system.</p>
+<p>This function:
+1. Runs the evaluation
+2. Displays results in the terminal
+3. Saves detailed results to JSON and text files</p>
+<p>The results are saved in two formats:
+- A JSON file containing structured results and metadata
+- A text file with detailed comparisons</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.medichat.eval.run_evaluation">
+<span class="sig-prename descclassname"><span class="pre">src.medichat.eval.</span></span><span class="sig-name descname"><span class="pre">run_evaluation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/src/medichat/eval.html#run_evaluation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.medichat.eval.run_evaluation" title="Link to this definition"></a></dt>
+<dd><p>Run the complete evaluation process for the chatbot.</p>
+<p>This function:
+1. Creates necessary directories
+2. Loads test data
+3. Tests the chatbot on each question
+4. Saves detailed comparisons
+5. Calculates similarity scores
+6. Measures response times</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Results containing questions, answers, similarity scores, and response times.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.medichat.eval.save_detailed_comparison">
+<span class="sig-prename descclassname"><span class="pre">src.medichat.eval.</span></span><span class="sig-name descname"><span class="pre">save_detailed_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chatbot_answer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_answers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similarity_score</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/src/medichat/eval.html#save_detailed_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.medichat.eval.save_detailed_comparison" title="Link to this definition"></a></dt>
+<dd><p>Save detailed comparison between chatbot answer and source answers to a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_file</strong> (<em>str</em>) – Path to the output file.</p></li>
+<li><p><strong>question</strong> (<em>str</em>) – Original question asked.</p></li>
+<li><p><strong>chatbot_answer</strong> (<em>str</em>) – Answer generated by the chatbot.</p></li>
+<li><p><strong>source_answers</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Reference answers from sources.</p></li>
+<li><p><strong>similarity_score</strong> (<em>float</em>) – Calculated similarity score.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="app.html" class="btn btn-neutral float-left" title="Streamlit APP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ingest.html" class="btn btn-neutral float-right" title="Ingest Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Malek Makhlouf.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
