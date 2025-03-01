@@ -23,6 +23,8 @@ if not st.session_state.files_fetched:
         else:
             st.info("No files found in the bucket.")
     except requests.exceptions.RequestException as e:
+
+        
         st.error(f"Failed to fetch files: {e}")
 
 
