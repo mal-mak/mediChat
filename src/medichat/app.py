@@ -4,8 +4,8 @@ from typing import Dict, List
 import streamlit as st
 import requests
 
-# HOST = "http://0.0.0.0:8181/"
-HOST = "https://malekmak-api-922282143131.europe-west1.run.app"
+HOST = "http://0.0.0.0:8181/"
+# HOST = "https://malekmak-api-922282143131.europe-west1.run.app"
 
 st.title("Malek's RAG Medical Chatbot")
 

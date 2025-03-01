@@ -122,6 +122,8 @@ Run evaluation:
 poetry run python src/medichat/eval.py
 ```
 
+![Evaluation](eval-json.png)
+
 ## 🎛️ Customization
 
 - **Temperature**: Controls response creativity (0.0-2.0)
